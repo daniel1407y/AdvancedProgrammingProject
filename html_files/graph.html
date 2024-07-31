@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Graph Visualization</title>
+    <style>
+        body {
+            background-color: #bed0d3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #network {
+            width: 90%;
+            height: 90%;
+            border: 2px solid #344042;
+            border-radius: 15px;
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.3.3/echarts.min.js"></script>
+</head>
+<body>
+<div id="network"></div>
+<script>
+    const chart = echarts.init(document.getElementById('network'));
+
+    const originalNodes = [
+        // Nodes inserted here by HtmlGraphWriter.java
+    ];
+    const originalEdges = [
+        // Edges inserted here by HtmlGraphWriter.java
+    ];
+
+    const option = {
+        tooltip: {},
+        animation: false,
+        series: [{
+            type: 'graph',
+            layout: 'force',
+            force: {
+                repulsion: 500,
+                edgeLength: 200
+            },
+            //roam: true,
+            draggable: true,
+            label: {
+                show: true,
+                fontSize: 16
+            },
+            lineStyle: {
+                color: '#000',
+                width: 2
+            },
+            edgeSymbol: ['circle', 'arrow'],
+            edgeSymbolSize: [0, 15],
+            symbolSize: 40,
+        }]
+    };
+
+    chart.setOption(option);
+
+    // Add nodes and edges
+    function updateGraph(nodes, edges) {
+        chart.setOption({
+            series: [{
+                data: nodes,
+                links: edges
+            }]
+        });
+    }
+
+    updateGraph(originalNodes, originalEdges);
+
+
+    // selects nodes by clicking
+    let highlightedNode = null;
+
+    chart.on('click', function (params) {
+        if (params.dataType === 'node') {
+            if (highlightedNode === params.data.name) {
+                // Reset to original graph if the same node is clicked again
+                highlightedNode = null;
+                updateGraph(originalNodes, originalEdges);
+            } else {
+                // Highlight the clicked node and its connected nodes
+                highlightedNode = params.data.name;
+                const connectedNodes = new Set();
+                const highlightedNodes = [];
+                const highlightedEdges = [];
+
+                // Find all connected nodes
+                originalEdges.forEach(edge => {
+                    if (edge.source === highlightedNode) {
+                        connectedNodes.add(edge.target);
+                    } else if (edge.target === highlightedNode) {
+                        connectedNodes.add(edge.source);
+                    }
+                });
+
+                // Highlight the clicked node
+                highlightedNodes.push({
+                    ...params.data,
+                });
+
+                // Highlight connected nodes and edges
+                originalNodes.forEach(node => {
+                    if (connectedNodes.has(node.name)) {
+                        highlightedNodes.push({
+                            ...node,
+                        });
+                    }
+                });
+                originalEdges.forEach(edge => {
+                    if (edge.source === highlightedNode || edge.target === highlightedNode) {
+                        highlightedEdges.push({
+                            ...edge,
+                        });
+                    } else {
+                        highlightedEdges.push(edge);
+                    }
+                });
+
+                chart.setOption({
+                    series: [{
+                        data: highlightedNodes,
+                        links: highlightedEdges
+                    }]
+                });
+            }
+        }
+    });
+</script>
+</body>
+</html>
