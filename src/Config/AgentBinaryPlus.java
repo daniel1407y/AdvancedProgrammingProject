@@ -15,8 +15,8 @@ public class AgentBinaryPlus implements Agent {
     private final TopicManagerSingleton.TopicManager topicManager = TopicManagerSingleton.get();
     public AgentBinaryPlus(String[] subs ,String[] pubs)
     {
-        x = "1";
-        y = "1";
+        x = "0";
+        y = "0";
         subToTopics(subs);
         outputTopic = topicManager.getTopic(pubs[0]);
         outputTopic.addPublisher(this);
@@ -40,8 +40,8 @@ public class AgentBinaryPlus implements Agent {
 
     @Override
     public void reset() {
-        x = "1";
-        y = "1";
+        x = "0";
+        y = "0";
     }
 
     @Override
