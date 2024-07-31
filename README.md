@@ -76,13 +76,15 @@ D
 ```bash
 ├───.idea
 ├───config_files
-├───created_directories
+├───created_configs
 ├───html_files
 └───src
+    ├───BinaryCalc
     ├───Config
     ├───graph
     ├───server
     ├───servlets
+    ├───tests
     └───views
 ```
 
