@@ -7,22 +7,41 @@
         body {
             background-color: #bed0d3;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
             margin: 0;
         }
         #network {
             width: 90%;
-            height: 90%;
+            height: 70%;
             border: 2px solid #344042;
             border-radius: 15px;
         }
+        #controls {
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input[type="text"] {
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.3.3/echarts.min.js"></script>
 </head>
 <body>
+<div id="controls">
+    <input type="text" id="searchBox" placeholder="Search node...">
+    <button id="downloadBtn">Download Graph</button>
+</div>
 <div id="network"></div>
 <script>
     const chart = echarts.init(document.getElementById('network'));
@@ -35,7 +54,15 @@
     ];
 
     const option = {
-        tooltip: {},
+        tooltip: {
+            trigger: 'item',
+            formatter: function (params) {
+                if (params.dataType === 'node') {
+                    return params.data.name;
+                }
+                return params.data.source + ' -> ' + params.data.target;
+            }
+        },
         animation: false,
         series: [{
             type: 'graph',
@@ -44,10 +71,10 @@
                 repulsion: 500,
                 edgeLength: 200
             },
-            //roam: true,
             draggable: true,
             label: {
                 show: true,
+                position: 'top',
                 fontSize: 16
             },
             lineStyle: {
@@ -62,7 +89,6 @@
 
     chart.setOption(option);
 
-    // Add nodes and edges
     function updateGraph(nodes, edges) {
         chart.setOption({
             series: [{
@@ -74,24 +100,19 @@
 
     updateGraph(originalNodes, originalEdges);
 
-
-    // selects nodes by clicking
     let highlightedNode = null;
 
     chart.on('click', function (params) {
         if (params.dataType === 'node') {
             if (highlightedNode === params.data.name) {
-                // Reset to original graph if the same node is clicked again
                 highlightedNode = null;
                 updateGraph(originalNodes, originalEdges);
             } else {
-                // Highlight the clicked node and its connected nodes
                 highlightedNode = params.data.name;
                 const connectedNodes = new Set();
                 const highlightedNodes = [];
                 const highlightedEdges = [];
 
-                // Find all connected nodes
                 originalEdges.forEach(edge => {
                     if (edge.source === highlightedNode) {
                         connectedNodes.add(edge.target);
@@ -100,24 +121,16 @@
                     }
                 });
 
-                // Highlight the clicked node
-                highlightedNodes.push({
-                    ...params.data,
-                });
+                highlightedNodes.push({ ...params.data });
 
-                // Highlight connected nodes and edges
                 originalNodes.forEach(node => {
                     if (connectedNodes.has(node.name)) {
-                        highlightedNodes.push({
-                            ...node,
-                        });
+                        highlightedNodes.push({ ...node });
                     }
                 });
                 originalEdges.forEach(edge => {
                     if (edge.source === highlightedNode || edge.target === highlightedNode) {
-                        highlightedEdges.push({
-                            ...edge,
-                        });
+                        highlightedEdges.push({ ...edge });
                     } else {
                         highlightedEdges.push(edge);
                     }
@@ -132,6 +145,26 @@
             }
         }
     });
+
+    // Search Box Functionality
+    document.getElementById('searchBox').addEventListener('input', function () {
+        const searchTerm = this.value.toLowerCase();
+        const filteredNodes = originalNodes.filter(node => node.name.toLowerCase().includes(searchTerm));
+        updateGraph(filteredNodes, originalEdges);
+    });
+
+    // Download Button Functionality
+    document.getElementById('downloadBtn').addEventListener('click', function () {
+        const imgUrl = chart.getDataURL({
+            pixelRatio: 2,
+            backgroundColor: '#fff'
+        });
+        const link = document.createElement('a');
+        link.href = imgUrl;
+        link.download = 'graph.png';
+        link.click();
+    });
+
 </script>
 </body>
 </html>
